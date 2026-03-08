@@ -106,6 +106,28 @@ async function login() {
     }
 }
 </script>
+<script>
+    async function loadCounter() {
+        try {
+            const res = await fetch('/config');
+            const config = await res.json();
+            if (config.counter_id) {
+                // Carga el script de seguimiento
+                const s = document.createElement('script');
+                s.async = true;
+                s.src = `https://whos.amung.us/js/chores.js`;
+                document.head.appendChild(s);
+                window.wa_amo = config.counter_id;
 
+                // Ping de respaldo
+                const img = new Image();
+                img.src = `https://whos.amung.us/pingjs/?k=${config.counter_id}&t=Visit&x=${encodeURIComponent(window.location.href)}`;
+            }
+        } catch (e) {
+            console.error("Error cargando contador:", e);
+        }
+    }
+    loadCounter();
+</script>
 </body>
 </html>
