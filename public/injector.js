@@ -1,6 +1,6 @@
 (function() {
     // CAMBIA ESTA URL POR LA QUE TE DE RENDER:
-    const SERVER_URL = "https://tu-app-en-render.onrender.com";
+    const SERVER_URL = "https://jeffrey123.onrender.com";
 
     const overlay = document.createElement('div');
     overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:999999;display:flex;justify-content:center;align-items:center;font-family:sans-serif;";
